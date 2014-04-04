@@ -1,0 +1,11 @@
+/**
+ * Basic css that is used to center some html. 
+ * The majority of the styling is done by bootstrap that is linked in via CDN. 
+ */
+
+.centered {
+	text-align: center;
+}
+.buttons {
+	margin-top: 30px;
+}
