@@ -62,4 +62,7 @@ jQuery(document).ready(function() {
 	$("#btn2").click(function() {
 		socket.emit('getCsv');
 	});
+	$("#btn3").click(function() {
+		socket.emit('getMongo');
+	})
 });

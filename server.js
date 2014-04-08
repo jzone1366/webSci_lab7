@@ -1,3 +1,4 @@
+var MongoClient = require('mongodb').MongoClient;	//Mongo DB connection
 var fs = require('fs');		//Filesystem to read and write to files
 var json2csv = require('json2csv');		//Used to export json to csv file. Slightly modified to deal with nested objects
 var express = require('express');		//Used to create a webserver to serve an HTML page
@@ -36,14 +37,22 @@ io.sockets.on('connection', function(socket){
 			if(exists){
 				console.log("File is being overwritten!");
 				socket.emit("tweetOver"); //Emit an event to the client of this socket for the client to display an alert based on this event. 
-				gatherTweets(); //call this function to gather the tweets
+				gatherTweets('file'); //call this function to gather the tweets
 			}
 			
 			else{
-				gatherTweets();
+				gatherTweets('file');
 				socket.emit("tweetSuccess");
 			}
 		});
+	});
+
+	/**
+	 * 
+	 */
+	socket.on('getMongo', function(){
+		console.log("Writing Tweets to Mongo");
+		gatherTweets('database');
 	});
 
 	socket.on('getCsv', function(){
@@ -74,7 +83,7 @@ io.sockets.on('connection', function(socket){
  * Streams all the tweets into an array that will hold 1000 tweets. Once the array has 1000 tweets the array is then writted to a json file using node-fs module. 
  * @return file ITWS4200-lab6-zonej-tweets.json
  */
-function gatherTweets() {
+function gatherTweets(name) {
 	console.log('Gettin dem dere tweets');
 	var i = 0;
 	var tweets = [];
@@ -97,16 +106,25 @@ function gatherTweets() {
 				if(i % 20 == 0){
 					console.log(i);
 				}
+				data._id = i;
 				tweets.push(data);
 				i++;
 			}
 
 			else if(i == 1000){
 				i++;
-				fs.writeFile('ITWS4200-lab6-zonej-tweets.json', JSON.stringify(tweets, null, 4), function(err){
-					if(err) throw err;
-					console.log("Tweets saved to file!");
-				});
+				if(name == 'file') {
+					fs.writeFile('ITWS4200-lab6-zonej-tweets.json', JSON.stringify(tweets, null, 4), function(err){
+						if(err) throw err;
+						console.log("Tweets saved to file!");
+					});
+				}
+				else if(name == 'database'){
+					tweetDatabase(tweets);
+				}
+				else {
+					console.log("file type isn't recognize!");
+				}
 			}
 				
 			else{
@@ -138,5 +156,36 @@ function tweet2csv() {
 			if(err) throw err;
 			console.log('file saved');
 		});
+	});
+}
+
+/**
+ * Connect to the mongodb Database to save the gathered tweets to a collection.
+ * Drop the collect if it exists to remake it by gathering the tweets. 
+ * @return mongodb Collection of tweets 
+ */
+function tweetDatabase(data) {
+	MongoClient.connect("mongodb://localhost:27017/tweetDB", function(err, db){
+		if(err){
+			return console.dir(err);
+		}
+		db.createCollection('tweets', {strict:true}, function(err, collection){
+			if(err){
+				db.collection('tweets').drop();
+				collectionInsert(db.collection('tweets'), data);
+			}
+			else{
+				collectionInsert(db.collection('tweets'), data);
+			}
+		});
+	});
+}
+
+function collectionInsert(collection, tweets){
+	collection.insert(tweets, function(err){
+		if(err){
+			console.dir(err);
+		}
+		console.log('success');
 	});
 }
