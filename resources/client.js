@@ -50,7 +50,66 @@ jQuery(document).ready(function() {
 	 */
 	socket.on('jsonNotExist', function(){
 		$("#alert").html("<div class='alert alert-danger alert-dismissable'><button type='button' class='close' data-dismiss='alert' aria-hidden='true'>&times;</button> The json file does not exist please create it first! </div>")
-	})
+	});
+	
+	/**
+	 * listen for the 'tweetReturn' event from the server. Receives an array of tweets from the server to parse and display on the page based on lab1. 
+	 * @param  array tweets collection of tweets to be parsed and displayed.
+	 */
+	socket.on('tweetReturn', function(tweets){
+		for(var i = 0; i < 5; i++){
+          $("#tweets").prepend("<li><img class='dp' src='" + tweets[i].user.profile_image_url + "'></img> <div class='tweet'>" + tweets[i].text + "</div></li>");
+          $("img").error(function () {
+            $(this).unbind("error").attr("src", "js/twitter-bird.jpg");
+          });
+       }
+       var count = 5;
+
+       //Every 2 seconds prepend a tweet to the ul and delete the last tweet
+       var timer = setInterval(function(){
+          if(count == tweets.length) count = 0;
+          var listItemHTML = "<li><img class='dp' src='" + tweets[count].user.profile_image_url + "'></img> <div class='tweet'>" + tweets[count].text + "</div></li>";
+
+          $(listItemHTML)
+               .hide()
+               .css('opacity',0.0)
+               .prependTo('#tweets')
+               .slideDown('slow')
+               .animate({opacity: 1.0});
+
+          $("img").error(function () {
+            $(this).unbind("error").attr("src", "js/twitter-bird.jpg");
+          });
+          if (count != tweets.length) count ++;
+          $("#tweets li:gt(5):last").remove();
+       } , 2000);
+
+       //hashtags
+       var count = 0;
+       var j=0;
+       while(j < 5){
+          if(tweets[count].entities.hashtags.length != 0){
+             $("#hashtags").prepend("<li> #" + tweets[count].entities.hashtags[0].text + "</li>");
+             j++;
+          }
+          count++;
+       }
+       var timer = setInterval(function(){
+          if(count == tweets.length) count = 0;
+          while(tweets[count].entities.hashtags.length == 0){
+             count++;
+          }
+          var listItemHTML = "<li> #" + tweets[count].entities.hashtags[0].text + "</li>";
+          $(listItemHTML)
+               .hide()
+               .css('opacity',0.0)
+               .prependTo('#hashtags')
+               .slideDown('slow')
+               .animate({opacity: 1.0});
+          if (count != tweets.length) count ++;
+          $("#hashtags li:gt(5):last").remove();
+       } , 2200);
+	});
 
 	/**
 	 * The click events for the buttons. These events emit the approriate message to the server in order to run the server side functions to either get the tweets or export to CSV.
@@ -65,4 +124,8 @@ jQuery(document).ready(function() {
 	$("#btn3").click(function() {
 		socket.emit('getMongo');
 	})
+	$("#btn4").click(function() {
+		socket.emit('displayTweets');
+		$("#alert").html("<div class='alert alert-success alert-dismissable'><button type='button' class='close' data-dismiss='alert' aria-hidden='true'>&times;</button> Getting Tweets to Display on Page. Please Wait</div>")
+	});
 });

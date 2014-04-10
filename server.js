@@ -32,7 +32,7 @@ io.sockets.on('connection', function(socket){
 		 * Check if the named file exists. If it does emit an event to notify the client of the existence to display a message to the user. 
 		 * @param  boolean exists True if the file exists. False otherwise.
 		 */
-		fs.exists('ITWS4200-lab6-zonej-tweets.json', function(exists){
+		fs.exists('ITWS4200-lab7-zonej-tweets.json', function(exists){
 			
 			if(exists){
 				console.log("File is being overwritten!");
@@ -47,20 +47,12 @@ io.sockets.on('connection', function(socket){
 		});
 	});
 
-	/**
-	 * 
-	 */
-	socket.on('getMongo', function(){
-		console.log("Writing Tweets to Mongo");
-		gatherTweets('database');
-	});
-
 	socket.on('getCsv', function(){
 		/**
 		 * Check if the file exists to export. If the json file does not exists then a warning is displayed client side telling the user to create it first
 		 * @param  boolean exists True if exists, False otherwise.
 		 */
-		fs.exists('ITWS4200-lab6-zonej-tweets.json', function(exists){
+		fs.exists('ITWS4200-lab7-zonej-tweets.json', function(exists){
 			
 			if(exists){
 				socket.emit("csvSuccess");
@@ -70,6 +62,31 @@ io.sockets.on('connection', function(socket){
 			else {
 				socket.emit("jsonNotExist");
 			}
+		});
+	});
+
+	/**
+	 * Retrieve the tweets to write to MongoDB. The retrieval is done in the same way as it is to create the JSON file. 
+	 * @return objects to mongoDB
+	 */
+	socket.on('getMongo', function(){
+		console.log("Writing Tweets to Mongo");
+		gatherTweets('database');
+	});
+
+	/**
+	 * Connect to the mongoDB collection of tweets and send them to the client to display on the page.
+	 * This is done by grabbing the collection as a whole into an array and sending the array to the client. 
+	 * @return array of tweet objects. 
+	 */
+	socket.on('displayTweets', function(){
+		MongoClient.connect("mongodb://localhost:27017/tweetDB", function(err, db){
+			if(err){
+				return console.dir(err);
+			}
+			db.collection('tweets').find().toArray(function(err, items){
+				socket.emit('tweetReturn', items);
+			});
 		});
 	});
 
@@ -114,7 +131,7 @@ function gatherTweets(name) {
 			else if(i == 1000){
 				i++;
 				if(name == 'file') {
-					fs.writeFile('ITWS4200-lab6-zonej-tweets.json', JSON.stringify(tweets, null, 4), function(err){
+					fs.writeFile('ITWS4200-lab7-zonej-tweets.json', JSON.stringify(tweets, null, 4), function(err){
 						if(err) throw err;
 						console.log("Tweets saved to file!");
 					});
@@ -142,7 +159,7 @@ function gatherTweets(name) {
  */
 function tweet2csv() {
 	console.log("Converting to CSV.");
-	var data = fs.readFileSync('ITWS4200-lab6-zonej-tweets.json').toString();
+	var data = fs.readFileSync('ITWS4200-lab7-zonej-tweets.json').toString();
 	var json = JSON.parse(data);
 	var columns = ['created_at', 'id', 'text', 'user.id', 'user.name', 'user.screen_name', 'user.location', 'user.followers_count', 'user.friends_count', 
 		'user.created_at', 'user.time_zone', 'user.profile_background_color', 'user.profile_image_url', 'geo', 'coordinates', 'place'];
@@ -152,7 +169,7 @@ function tweet2csv() {
 
 	json2csv({data: json, fields: columns, fieldNames: col_names}, function(err, csv){
 		if(err) console.log(err);
-		fs.writeFile('ITWS-lab6-zonej-tweets.csv', csv, function(err){
+		fs.writeFile('ITWS-lab7-zonej-tweets.csv', csv, function(err){
 			if(err) throw err;
 			console.log('file saved');
 		});
@@ -181,6 +198,12 @@ function tweetDatabase(data) {
 	});
 }
 
+/**
+ * Connect to the mongoDB collection to insert the tweet array that is passed in.
+ * @param  string collection the mongoDB collection to insert into
+ * @param  array tweets     the array of tweets to insert into the collection that is passed in. 
+ * @return string 	Success message written to the log. 
+ */
 function collectionInsert(collection, tweets){
 	collection.insert(tweets, function(err){
 		if(err){

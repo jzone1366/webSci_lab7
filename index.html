@@ -9,18 +9,24 @@
 		<div class="container">
 			<form role="form">
 				<div class="row">
-					<div class="col-md-6 col-md-offset-3">
-						<h1 class="centered"> Tweets to JSON to CSV</h1>
-						<h2 class="centered"> zonej - Lab 6 </h2>
+					<div class="col-md-6 col-md-offset-3 drop">
+						<h1 class="centered">zonej - lab 7 </h1>
 						<span id="alert"> </span>
 						<div class="buttons text-center">
-							<button type="button" class="btn btn-primary btn-lg" id="btn1">Tweets to JSON</button>
-							<button type="button" class="btn btn-primary btn-lg" id="btn2">JSON to CSV</button>
-							<button type="button" class="btn btn-primary btn-lg" id="btn3">Tweets to Mongo</button>
+							<button type="button" class="btn btn-primary btn-md" id="btn1"> Tweets to JSON </button>
+							<button type="button" class="btn btn-primary btn-md" id="btn2"> JSON to CSV </button>
+							<button type="button" class="btn btn-primary btn-md" id="btn3"> Tweets to Mongo </button>
+							<button type="button" class="btn btn-primary btn-md" id="btn4"> Display Tweets </button>
 						</div>
 					</div>
 				</div>
 			</form>
+			<div id = "tweetsContainer" class="col-xs-12 col-md-6 col-md-offset-1">
+				<ul id="tweets" class="tweeclass"></ul>	
+			</div>
+			<div id = "hashContainer" class="col-xs-6 col-md-3">
+				<ul id="hashtags" class="hashclass"></ul>	
+			</div>
 		</div>
 	</body>
 	<script src="/socket.io/socket.io.js"></script>
